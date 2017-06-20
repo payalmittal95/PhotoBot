@@ -115,3 +115,33 @@ def get_post_id(insta_username):
     else :
         print "Status code other than 200 received [%d]" % user_media['meta']['code']
         exit()
+
+#Function to get the list of people who have liked the recent post of a user
+
+def get_like_list(insta_username):
+    media_id = get_post_id(insta_username)
+    request_url = (BASE_URL + 'media/%s/likes?access_token=%s') % (media_id, ACCESS_TOKEN)
+    print "Requesting URL : %s" % request_url
+    likes_info = requests.get(request_url).json()
+
+    if likes_info['meta']['code'] == 200:
+        if len(likes_info['data']):
+            for x in range(0, len(likes_info['data'])):
+                print likes_info['data'][x]['username']
+        else:
+            print "no user has likes this post yet."
+    else:
+        print "Status code other than 200  received [%d]" % likes_info['meta']['code']
+
+#Function to like a post
+
+def like_a_post(insta_username):
+    media_id = get_post_id(insta_username)
+    request_url = (BASE_URL + 'media/%s/likes') % media_id
+    payload = {'access_token' : ACCESS_TOKEN}
+    print "POST Requesting URL : %s" % request_url
+    post_a_like = requests.get(request_url).json()
+    if post_a_like['meta']['code'] == 200:
+        print "Post liked successfully"
+    else:
+        print "Status code other than 200 received [%d]" % post_a_like['meta']['code']
