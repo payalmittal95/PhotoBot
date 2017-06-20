@@ -43,6 +43,8 @@ def get_user_info(insta_username):
     if user_id == None:
         print "User doesn't exist."
         exit()
+    else:
+        print "user id= %d" % user_id
     request_url = (BASE_URL + 'users/%s?access_token=%s') % (user_id, ACCESS_TOKEN)
     print "Requesting url : %s" % request_url
     user_info = requests.get(request_url).json()
@@ -73,3 +75,24 @@ def get_own_post():
             print "The photo doesn't exist."
     else :
         print "Status code other than 200 recieved [%d]" % own_media['meta']['code']
+
+#Function to get posts of a user by username
+def get_user_post(insta_username):
+    user_id = get_user_id()
+    if user_id == None:
+        print "User doesn't exist"
+        exit()
+    request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, ACCESS_TOKEN)
+    print 'Requestig url : %s' % (request_url)
+    user_media = requests.get(request_url).json()
+
+    if user_media['meta']['code'] == 200:
+        if len(user_media['data']):
+            image_name = user_media['data'][0]['id'] + ".jpeg"
+            img_url = user_media['data'][0]['images']['standard_resolution']['url']
+            urllib.urlretrieve(img_url,image_name)
+            print "Your image has been downloaded!"
+        else:
+            print "Post doesn't exist"
+    else:
+        print "Status code other than 200 received. [%d]" % user_media['meta']['code']
