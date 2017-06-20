@@ -56,3 +56,20 @@ def get_user_info(insta_username):
             print "There is no data for this user."
     else :
         print "Status code other than 200 recieved.[%d]" % user_info['meta']['code']
+
+#Function to download own image post.
+def get_own_post():
+    request_url = (BASE_URL + 'users/self/media/recent/?access_token=%s') % (ACCESS_TOKEN)
+    print "Requesting url for : %s" % request_url
+    own_media = requests.get(request_url).json()
+    #condition to check the status code.
+    if own_media['meta']['code'] == 200:
+        if len(own_media['data']):
+            img_name = own_media['data'][0]['id'] + '.jpeg'
+            img_url = own_media['data'][0]['images']['standard_resolution']['url']
+            urllib.urlretrieve(img_url, img_name)
+            print "Your image has been downloaded!"
+        else:
+            print "The photo doesn't exist."
+    else :
+        print "Status code other than 200 recieved [%d]" % own_media['meta']['code']
