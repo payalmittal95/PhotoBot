@@ -17,6 +17,7 @@ def self_info():
     user_info = requests.get(request_url).json()
     # checking the status code of the returned json object.
     if user_info['meta']['code'] == 200:
+        # noinspection PyInterpreter
         if len(user_info["data"]):
             # printing our on=wn informaton.
             print "Username: %s." % (user_info['data']['username'])
@@ -98,8 +99,8 @@ def num_of_likes(insta_username, ):
     user_media = requests.get(request_url).json()
     if user_media['meta']['code'] == 200:
         if len(user_media['data']):
-            like_count["min_id"] = user_media['data'][0]
-            like_count["max_id"] = user_media['data'][0]
+            like_count["min_id"] = 0
+            like_count["max_id"] = 0
             like_count['min'] = user_media['data'][0]['likes']['count']
             like_count['max'] = user_media['data'][0]['likes']['count']
             for x in range(0, len(user_media['data'])):
@@ -124,7 +125,7 @@ def get_user_post(insta_username):
     user_media = requests.get(request_url).json()
     i = None
     #to display the selection criteria
-    while i is not 1 or i is not 2 or i is not 3:
+    while i is not 1 or 2 or 3:
         print "Select criteria for selecting post : "
         print "1) Minimum Likes.\n2) Maximum Likes.\n3)Most Recent Post."
         post_choice = int(raw_input("Please Enter Your Post Selection Criteria : "))
@@ -133,7 +134,7 @@ def get_user_post(insta_username):
         elif post_choice == 2:
             i = like_count['max_id']
         elif post_choice == 3:
-         i = 0
+            i = 0
         else:
             print "Wrong choice. Enter one of the above 3."
 
@@ -164,6 +165,7 @@ def get_post_id(insta_username):
     if user_media['meta']['code'] == 200:
         if len(user_media['data']):
             # returning the id of the post.
+            print user_media['data'][0]['id']
             return user_media['data'][0]['id']
         else:
             print "There is no recent post"
@@ -276,6 +278,61 @@ def del_negative_comment(insta_username):
     else:
         print "Unable to recieve comments. status code other than 200 received. [%d]" % comment_info['meta']['code']
 
+#function to read and return caption on a post.
+def get_media_info(media_id):
+    request_url = (BASE_URL + 'media/%s?access_token=5629236876.1cc9688.86db895c038043b5960dc2949785299a') % (media_id)
+    print "GET Requesting URL for media info : %s" % request_url
+    media_info = requests.get(request_url).json()
+    caption = media_info['data']['caption']['text']
+    return caption
+
+#list that contains common words for a natural calamity.
+natural_calamity_words = ['#flood', '#earthquake', '#relief', '#help']
+#function to get the recent media in a given area using location-id
+def get_media_by_location(location_id):
+    request_url = (BASE_URL + 'locations/%s/media/recent?access_token=5629236876.1cc9688.86db895c038043b5960dc2949785299a') % location_id
+    media_info = requests.get(request_url).json()
+
+    if media_info['meta']['code'] == 200:
+        if len(media_info['data']):
+            #traversing through all the images for the given location id
+            for x in range(0, len(media_info['data'])):
+                media_id = media_info['data'][x]['id']
+                #receiving the caption for the given image.
+                caption = get_media_info(media_id)
+                #to check if the caption contains any word that relates to a natural calamity.
+                for i in natural_calamity_words:
+                    if i in caption:
+                        print "This image was for the natural calamity : %s" % i
+                        #downloading the image related to a natural calamity.
+                        image_name = media_info['data'][x]['id'] + ".jpeg"
+                        img_url = media_info['data'][x]['images']['standard_resolution']['url']
+                        # downloading the image using its url and saving it with img_name.
+                        urllib.urlretrieve(img_url, image_name)
+                        print "The image has been downloaded."
+                        break
+        else:
+            print "There are no images for this location id"
+    else :
+        print "satus code other than 200 received."
+#function to get location id by latitude and longitude.
+def get_location_id():
+    request_url = (BASE_URL + 'locations/search?lat=28.6303&lng=77.2201&distance=0&access_token=5629236876.1cc9688.86db895c038043b5960dc2949785299a')
+    print "Get Requesting URL to get location id : %s"% request_url
+    location_info = requests.get(request_url).json()
+
+    if location_info['meta']['code'] == 200:
+        if len(location_info['data']):
+            #traversing through vthe list of location-ids received for the given coordinates.
+            for x in range(0, len(location_info['data'])):
+                location_id = location_info['data'][x]['id']
+                print "For Location ID = " + str(location_id)
+                #checking the recent media for the given location-id.
+                get_media_by_location(location_id)
+        else:
+            print "No location id for these coordinates."
+    else:
+        print "status code other than 200 recieved."
 
 def start_bot():
     while True:
@@ -286,9 +343,8 @@ def start_bot():
         print "e.Get a list of people who have liked the recent post of a user"
         print "f.Like the recent post of a user\ng.Get a list of comments on the recent post of a user"
         print "h.Make a comment on the recent post of a user\ni.Delete negative comments from the recent post of a user"
-        print "j."
+        print "j.Analyse the caption and determine if it is about a natural calamity\nk.Exit"
         #to find the pic with maximum & minimum likes.
-        num_of_likes(insta_username)
 
         choice = raw_input("Enter you choice : ")
         if choice == "a":
@@ -300,26 +356,33 @@ def start_bot():
             get_own_post()
         elif choice == "d":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             get_user_post(insta_username)
         elif choice == "e":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             get_like_list(insta_username)
         elif choice == "f":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             like_a_post(insta_username)
         elif choice == "g":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             get_comment_list(insta_username)
         elif choice == "h":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             make_a_comment(insta_username)
         elif choice == "i":
             insta_username = raw_input("Enter the username of the user: ")
+            num_of_likes(insta_username)
             del_negative_comment(insta_username)
         elif choice == "j":
+            get_location_id()
+        elif choice == "k":
             exit()
         else:
             print "Wrong Option. Please select one of the options."
-
 # function call to start the bot.
 start_bot()
